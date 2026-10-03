@@ -177,7 +177,6 @@ export default function TheatronPage() {
             onTimeUpdate={handleVideoTimeUpdate}
             onEnded={triggerCurtainTransition}
           >
-            <source src="/assets/intro_8k.mp4" type="video/mp4" />
             <source src="/assets/intro.mp4" type="video/mp4" />
           </video>
 
