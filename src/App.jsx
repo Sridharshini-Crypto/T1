@@ -54,40 +54,52 @@ export default function TheatronPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // 2. DIRECT START: Video starts playing immediately on page load with mild audio (0.28)
+  // 2. DIRECT START: Video autoplays immediately on page load; mild audio (0.28) unfreezes on interaction
   useEffect(() => {
     const video = introVideoRef.current;
     if (video) {
-      video.volume = 0.28; // Mild, atmospheric audio
-      video.currentTime = 0;
+      video.muted = true;
+      video.defaultMuted = true;
+      video.volume = 0.28;
 
-      // Attempt unmuted autoplay with mild audio
+      // Reliable autoplay start
       const playPromise = video.play();
       if (playPromise !== undefined) {
         playPromise
           .then(() => {
-            setIsAudioMuted(false);
+            // Autoplay successfully running
           })
-          .catch(() => {
-            // If browser blocks unmuted audio on load, start muted immediately so video glides without delay
+          .catch((err) => {
+            console.log("Autoplay waiting for gesture:", err);
             video.muted = true;
-            setIsAudioMuted(true);
-            video.play().catch(e => console.log(e));
-
-            // Unmute with mild audio on the first user interaction anywhere on the window
-            const unlockAudio = () => {
-              video.muted = false;
-              video.volume = 0.28;
-              setIsAudioMuted(false);
-              window.removeEventListener('click', unlockAudio);
-              window.removeEventListener('keydown', unlockAudio);
-              window.removeEventListener('touchstart', unlockAudio);
-            };
-            window.addEventListener('click', unlockAudio);
-            window.addEventListener('keydown', unlockAudio);
-            window.addEventListener('touchstart', unlockAudio);
+            video.play().catch(() => {});
           });
       }
+
+      // Smoothly activate mild atmospheric sound (0.28) upon user's first touch/click anywhere
+      const unlockAudio = () => {
+        if (video) {
+          if (video.paused) {
+            video.play().catch(() => {});
+          }
+          video.muted = false;
+          video.volume = 0.28;
+          setIsAudioMuted(false);
+        }
+        window.removeEventListener('click', unlockAudio);
+        window.removeEventListener('keydown', unlockAudio);
+        window.removeEventListener('touchstart', unlockAudio);
+      };
+
+      window.addEventListener('click', unlockAudio);
+      window.addEventListener('keydown', unlockAudio);
+      window.addEventListener('touchstart', unlockAudio);
+
+      return () => {
+        window.removeEventListener('click', unlockAudio);
+        window.removeEventListener('keydown', unlockAudio);
+        window.removeEventListener('touchstart', unlockAudio);
+      };
     }
   }, []);
 
@@ -173,6 +185,7 @@ export default function TheatronPage() {
             className="cinema-projection-video"
             playsInline
             autoPlay
+            muted
             preload="auto"
             onTimeUpdate={handleVideoTimeUpdate}
             onEnded={triggerCurtainTransition}
@@ -271,6 +284,7 @@ export default function TheatronPage() {
             </button>
           </nav>
         </header>
+
 
         {/* ========================================================
             HERO CONTENT: VISUAL HIERARCHY
