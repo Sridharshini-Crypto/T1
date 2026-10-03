@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Play, 
@@ -10,25 +12,22 @@ import {
   Download, 
   X, 
   Film, 
-  Sparkles, 
-  Users 
+  Sparkles 
 } from 'lucide-react';
-import './App.css';
 
-export default function App() {
-  const [hasEntered, setHasEntered] = useState(false);
+export default function TheatronPage() {
   const [transitioning, setTransitioning] = useState(false);
   const [isIntroDone, setIsIntroDone] = useState(false);
   const [flashActive, setFlashActive] = useState(false);
   const [isAudioMuted, setIsAudioMuted] = useState(false);
-  const [activeModal, setActiveModal] = useState(null); // 'events' | 'trailer' | 'download'
+  const [activeView, setActiveView] = useState('hero'); // 'hero' | 'events' | 'trailer' | 'download'
   const [countdown, setCountdown] = useState({ days: '14', hours: '08', minutes: '45', seconds: '30' });
 
   const introVideoRef = useRef(null);
   const bgAudioRef = useRef(null);
   const trailerVideoRef = useRef(null);
 
-  // Live Countdown Timer
+  // 1. Live Countdown Timer to Theatron 2026
   useEffect(() => {
     const targetDate = new Date();
     targetDate.setDate(targetDate.getDate() + 18);
@@ -55,18 +54,44 @@ export default function App() {
     return () => clearInterval(timer);
   }, []);
 
-  // Handle entering the experience
-  const handleEnterExperience = () => {
-    setHasEntered(true);
-    if (introVideoRef.current) {
-      introVideoRef.current.currentTime = 0;
-      introVideoRef.current.play().catch(err => {
-        console.warn('Autoplay error:', err);
-      });
-    }
-  };
+  // 2. DIRECT START: Video starts playing immediately on page load with mild audio (0.28)
+  useEffect(() => {
+    const video = introVideoRef.current;
+    if (video) {
+      video.volume = 0.28; // Mild, atmospheric audio
+      video.currentTime = 0;
 
-  // Curtains opening transition logic
+      // Attempt unmuted autoplay with mild audio
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setIsAudioMuted(false);
+          })
+          .catch(() => {
+            // If browser blocks unmuted audio on load, start muted immediately so video glides without delay
+            video.muted = true;
+            setIsAudioMuted(true);
+            video.play().catch(e => console.log(e));
+
+            // Unmute with mild audio on the first user interaction anywhere on the window
+            const unlockAudio = () => {
+              video.muted = false;
+              video.volume = 0.28;
+              setIsAudioMuted(false);
+              window.removeEventListener('click', unlockAudio);
+              window.removeEventListener('keydown', unlockAudio);
+              window.removeEventListener('touchstart', unlockAudio);
+            };
+            window.addEventListener('click', unlockAudio);
+            window.addEventListener('keydown', unlockAudio);
+            window.addEventListener('touchstart', unlockAudio);
+          });
+      }
+    }
+  }, []);
+
+  // 3. Curtains opening transition logic (at ~7.3s)
   const triggerCurtainTransition = () => {
     if (transitioning || isIntroDone) return;
     setFlashActive(true);
@@ -74,18 +99,18 @@ export default function App() {
 
     setTimeout(() => {
       setFlashActive(false);
-    }, 400);
+    }, 450);
 
     setTimeout(() => {
       setIsIntroDone(true);
       if (introVideoRef.current) {
         introVideoRef.current.pause();
       }
-    }, 1200);
+    }, 1100);
   };
 
   const handleVideoTimeUpdate = () => {
-    // The curtains fully open around frame 185 (7.4s)
+    // The curtains fully open around 7.3s
     if (introVideoRef.current && introVideoRef.current.currentTime >= 7.3) {
       triggerCurtainTransition();
     }
@@ -93,24 +118,31 @@ export default function App() {
 
   // Replay intro video
   const handleReplayIntro = () => {
+    setActiveView('hero');
     setIsIntroDone(false);
     setTransitioning(false);
-    setHasEntered(true);
     if (introVideoRef.current) {
       introVideoRef.current.currentTime = 0;
+      introVideoRef.current.volume = 0.28;
       introVideoRef.current.play();
     }
   };
 
   // Audio Toggle
-  const toggleAudio = () => {
+  const toggleAudio = (e) => {
+    if (e) e.stopPropagation();
     const nextState = !isAudioMuted;
     setIsAudioMuted(nextState);
     if (introVideoRef.current) {
       introVideoRef.current.muted = nextState;
+      if (!nextState) introVideoRef.current.volume = 0.28;
     }
     if (bgAudioRef.current) {
       bgAudioRef.current.muted = nextState;
+      if (!nextState) {
+        bgAudioRef.current.volume = 0.25;
+        bgAudioRef.current.play().catch(err => console.log(err));
+      }
     }
   };
 
@@ -126,349 +158,361 @@ export default function App() {
   };
 
   return (
-    <div className="app-container">
+    <div className="theatron-stage-viewport">
       {/* Background Ambience Audio */}
       <audio ref={bgAudioRef} src="/assets/theatre_audio.mp3" loop />
 
       {/* ========================================================
-          INTRO VIDEO & CURTAIN REVEAL EXPERIENCE
+          1. INTRO: DIRECT 8K THEATRE CAMERA & CURTAINS SEQUENCE
+          No gate screens. Starts playing immediately.
           ======================================================== */}
       {!isIntroDone && (
-        <div className={`intro-container ${transitioning ? 'transitioning' : ''}`}>
-          {/* Click to Enter Gate for unmuted audio & browser policy */}
-          {!hasEntered && (
-            <div className="enter-gate">
-              <div className="gate-content">
-                <div className="gate-badge">IMMERSE × RS PRESENTS</div>
-                <h1 className="gate-title">THEATRON</h1>
-                <p className="gate-subtitle">Where stories come alive.</p>
-                <button className="btn-enter" onClick={handleEnterExperience}>
-                  <Play size={16} fill="white" />
-                  <span>ENTER EXPERIENCE</span>
-                </button>
-                <div className="audio-notice">♪ Best experienced with sound</div>
-              </div>
-            </div>
-          )}
-
-          {/* Cleaned Intro Video (Watermark removed, ends at curtains opening) */}
+        <div className={`intro-cinema-layer ${transitioning ? 'transitioning' : ''}`}>
           <video
             ref={introVideoRef}
-            className="intro-video"
+            className="cinema-projection-video"
             playsInline
+            autoPlay
             preload="auto"
             onTimeUpdate={handleVideoTimeUpdate}
             onEnded={triggerCurtainTransition}
           >
+            <source src="/assets/intro_8k.mp4" type="video/mp4" />
             <source src="/assets/intro.mp4" type="video/mp4" />
           </video>
 
-          {/* Lens Flare / Curtain Transition Flash */}
+          {/* Anamorphic Lens Flare Sweep on Curtains Opening */}
           <div className={`cinema-flash ${flashActive ? 'active' : ''}`} />
 
-          {/* Intro HUD */}
-          {hasEntered && (
-            <div className="intro-hud">
-              <button className="btn-hud" onClick={triggerCurtainTransition}>
-                <span>SKIP TO MAIN PAGE</span>
-                <ArrowRight size={14} />
-              </button>
-              <button className="btn-hud" onClick={toggleAudio} title="Toggle Sound">
-                {isAudioMuted ? <VolumeX size={15} /> : <Volume2 size={15} />}
-              </button>
-            </div>
-          )}
+          {/* Minimal Cinema HUD */}
+          <div className="cinema-hud">
+            <button className="hud-btn" onClick={triggerCurtainTransition}>
+              <span>SKIP TO STAGE</span>
+              <ArrowRight size={13} />
+            </button>
+          </div>
         </div>
       )}
 
       {/* ========================================================
-          MAIN LANDING PAGE (Matches your uploaded design)
+          2. MAIN THEATRICAL STAGE EXPERIENCE
+          Zero duplicates: Uses clean backdrop without baked-in text.
+          Wide cinematic scene with live typography, countdown & actions.
           ======================================================== */}
-      <main className="main-page">
-        {/* Backdrop Visual (Cleaned stage with spotlight on red gown) */}
-        <div className="stage-backdrop">
+      <div className={`theatre-scene-container ${isIntroDone ? 'visible' : 'prerender'}`}>
+        {/* Full-bleed Pristine Theatrical Backdrop (Pristine stage, NO baked text) */}
+        <div className="theatre-stage-environment">
           <img 
-            src="/assets/main_page_clean.jpg" 
+            src="/assets/stage_backdrop_hd.jpg" 
             alt="Theatron 2026 Stage" 
-            className="backdrop-img" 
+            className="stage-backdrop-visual" 
           />
-          <div className="stage-vignette" />
-          <div className="stage-particles">
-            {[...Array(24)].map((_, i) => (
-              <div
+          <div className="theatre-light-cone" />
+          <div className="theatre-edge-vignette" />
+
+          {/* Golden Theatre Dust Motes */}
+          <div className="spotlight-particles">
+            {[...Array(26)].map((_, i) => (
+              <span
                 key={i}
-                className="particle"
+                className="dust-mote"
                 style={{
-                  width: `${(i % 3) + 1.5}px`,
-                  height: `${(i % 3) + 1.5}px`,
-                  left: `${(i * 4.2) % 100}%`,
-                  animationDuration: `${8 + (i % 7)}s`,
-                  animationDelay: `${(i * 0.4) % 6}s`,
+                  width: `${(i % 3) + 1.2}px`,
+                  height: `${(i % 3) + 1.2}px`,
+                  left: `${52 + ((i * 3.8) % 36)}%`,
+                  animationDuration: `${7 + (i % 8)}s`,
+                  animationDelay: `${(i * 0.35) % 5}s`,
                 }}
               />
             ))}
           </div>
         </div>
 
-        {/* Top Navbar */}
-        <header className="navbar">
-          <div className="nav-left">
-            <span className="badge-theatron" onClick={handleReplayIntro} title="Click to replay intro">
-              THEATRON
-            </span>
-          </div>
-
-          <div className="nav-center">
-            <div className="collab-badge">
-              <span className="text-immerse">IMMERSE</span>
-              <span className="cross">×</span>
-              <span className="text-rs">RS</span>
-              <span className="sub-rs">TEAM RESOLUTION</span>
+        {/* Minimalist Top Theatrical Bar */}
+        <header className="theatre-top-bar">
+          <div className="bar-left">
+            <div className="theatron-badge-logo" onClick={handleReplayIntro} title="Replay Opening Sequence">
+              <span>THEATRON</span>
             </div>
           </div>
 
-          <nav className="nav-right">
-            <button className="nav-link active">HOME</button>
-            <button className="nav-link" onClick={() => setActiveModal('events')}>EVENTS</button>
-            <button className="nav-link" onClick={() => setActiveModal('events')}>GALLERY</button>
-            <button className="nav-link" onClick={() => setActiveModal('contact')}>CONTACT</button>
+          <div className="bar-center">
+            <div className="theatre-collab">
+              <span className="collab-immerse">IMMERSE</span>
+              <span className="collab-cross">×</span>
+              <span className="collab-rs">RS</span>
+              <span className="collab-team">TEAM RESOLUTION</span>
+            </div>
+          </div>
+
+          <nav className="bar-right">
+            <button 
+              className={`theatre-nav-link ${activeView === 'hero' ? 'active' : ''}`}
+              onClick={() => setActiveView('hero')}
+            >
+              HOME
+            </button>
+            <button 
+              className={`theatre-nav-link ${activeView === 'events' ? 'active' : ''}`}
+              onClick={() => setActiveView('events')}
+            >
+              EVENTS
+            </button>
+            <button 
+              className="theatre-nav-link"
+              onClick={() => setActiveView('events')}
+            >
+              GALLERY
+            </button>
+            <button 
+              className="theatre-nav-link"
+              onClick={() => setActiveView('download')}
+            >
+              CONTACT
+            </button>
           </nav>
         </header>
 
-        {/* Left Rail Controls */}
-        <aside className="left-rail">
-          <button 
-            className="rail-btn" 
-            onClick={toggleAudio} 
-            title={isAudioMuted ? "Unmute Ambience" : "Mute Ambience"}
-          >
-            {isAudioMuted ? <VolumeX size={15} /> : <Volume2 size={15} color="var(--text-gold)" />}
-          </button>
-          <button 
-            className="rail-btn" 
-            onClick={toggleFullscreen} 
-            title="Toggle Fullscreen"
-          >
-            <Maximize2 size={15} />
-          </button>
-        </aside>
+        {/* ========================================================
+            HERO CONTENT: VISUAL HIERARCHY
+            STAGE/PERFORMANCE (Right) → THEATRON (Left) → INFO → ACTIONS
+            Zero duplicate text.
+            ======================================================== */}
+        {activeView === 'hero' && (
+          <section className="theatre-hero-grid">
+            <div className="theatre-hero-left">
+              {/* THEATRON Main Branding */}
+              <div className="hero-brand-block">
+                <h1 className="hero-theatron-title">THEATRON</h1>
+                <div className="hero-theatron-year">2026</div>
+              </div>
 
-        {/* Hero Content */}
-        <section className="hero-section">
-          <div className="hero-left-content">
-            <div className="title-block">
-              <h1 className="hero-title">THEATRON</h1>
-              <div className="hero-year">2026</div>
-            </div>
+              {/* Tagline */}
+              <div className="hero-tagline-wrapper">
+                <span className="tagline-brass-line" />
+                <p className="hero-tagline-text">Where stories come alive.</p>
+              </div>
 
-            <div className="tagline-block">
-              <span className="tagline-line" />
-              <p className="hero-tagline">Where stories come alive.</p>
-            </div>
-
-            <div className="countdown-block">
-              <div className="countdown-label">YOUR SHOW BEGINS IN</div>
-              <div className="countdown-digits">
-                <div className="digit-box">
-                  <span className="number">{countdown.days}</span>
-                  <span className="label">DAYS</span>
-                </div>
-                <div className="digit-box">
-                  <span className="number">{countdown.hours}</span>
-                  <span className="label">HOURS</span>
-                </div>
-                <div className="digit-box">
-                  <span className="number">{countdown.minutes}</span>
-                  <span className="label">MINUTES</span>
-                </div>
-                <div className="digit-box">
-                  <span className="number">{countdown.seconds}</span>
-                  <span className="label">SECONDS</span>
+              {/* Event Information: Countdown */}
+              <div className="hero-countdown-block">
+                <span className="countdown-eyebrow">YOUR SHOW BEGINS IN</span>
+                <div className="theatre-countdown-display">
+                  <div className="countdown-dial">
+                    <span className="dial-value">{countdown.days}</span>
+                    <span className="dial-label">DAYS</span>
+                  </div>
+                  <div className="countdown-dial">
+                    <span className="dial-value">{countdown.hours}</span>
+                    <span className="dial-label">HOURS</span>
+                  </div>
+                  <div className="countdown-dial">
+                    <span className="dial-value">{countdown.minutes}</span>
+                    <span className="dial-label">MINUTES</span>
+                  </div>
+                  <div className="countdown-dial seconds-dial">
+                    <span className="dial-value">{countdown.seconds}</span>
+                    <span className="dial-label">SECONDS</span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="cta-actions">
-              <button 
-                className="btn-cta primary-cta" 
-                onClick={() => setActiveModal('events')}
-              >
-                <span>EXPLORE EVENTS</span>
-                <span className="cta-arrow">→</span>
-              </button>
-              <button 
-                className="btn-cta secondary-cta" 
-                onClick={() => setActiveModal('trailer')}
-              >
-                <Play size={13} fill="var(--text-gold)" color="var(--text-gold)" />
-                <span>WATCH TRAILER</span>
-              </button>
-            </div>
+              {/* Theatrical Action Buttons */}
+              <div className="hero-action-row">
+                <button 
+                  className="theatre-btn theatre-btn-primary"
+                  onClick={() => setActiveView('events')}
+                >
+                  <span>EXPLORE EVENTS</span>
+                  <ArrowRight size={13} className="btn-arrow" />
+                </button>
+                <button 
+                  className="theatre-btn theatre-btn-secondary"
+                  onClick={() => setActiveView('trailer')}
+                >
+                  <Play size={12} fill="#c7a164" color="#c7a164" />
+                  <span>WATCH TRAILER</span>
+                </button>
+              </div>
 
-            <div className="curtain-status">
-              <span className="status-text">CURTAIN RISES</span>
-              <span className="status-date">
-                <Calendar size={13} />
-                <span>DATES TO BE ANNOUNCED</span>
-              </span>
+              {/* Curtain Status Line */}
+              <div className="theatre-status-line">
+                <span className="status-label">CURTAIN RISES</span>
+                <span className="status-val">
+                  <Calendar size={13} color="#c7a164" />
+                  <span>DATES TO BE ANNOUNCED</span>
+                </span>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
-        {/* Bottom Footer */}
-        <footer className="main-footer">
-          <div className="footer-left">
-            <button className="btn-replay" onClick={handleReplayIntro} title="Replay Opening Video & Curtains">
+        {/* ========================================================
+            INTEGRATED THEATRICAL PLAYBILL: EVENTS VIEW
+            ======================================================== */}
+        {activeView === 'events' && (
+          <section className="theatre-playbill-overlay">
+            <div className="playbill-content-drawer">
+              <div className="playbill-header">
+                <div>
+                  <div className="playbill-kicker">FESTIVAL REPERTOIRE</div>
+                  <h2 className="playbill-title">THEATRON 2026 EVENTS</h2>
+                </div>
+                <button className="playbill-close-btn" onClick={() => setActiveView('hero')}>
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="playbill-acts-list">
+                <div className="act-row">
+                  <span className="act-num">ACT I</span>
+                  <div className="act-details">
+                    <h3 className="act-name">THE STAGE PLAY (NATAKA)</h3>
+                    <p className="act-desc">Full-scale theatrical drama. Dynamic staging, expressive dialogue, and ensemble storytelling.</p>
+                  </div>
+                  <div className="act-meta">
+                    <span>6–15 ACTORS</span>
+                    <span>20 MINS</span>
+                  </div>
+                </div>
+
+                <div className="act-row">
+                  <span className="act-num">ACT II</span>
+                  <div className="act-details">
+                    <h3 className="act-name">CINEMATICS (SHORT FILM FESTIVAL)</h3>
+                    <p className="act-desc">Original narrative cinema judged on visual storytelling, direction, cinematography, and sound.</p>
+                  </div>
+                  <div className="act-meta">
+                    <span>7–15 MINS</span>
+                    <span>4K SCREENING</span>
+                  </div>
+                </div>
+
+                <div className="act-row">
+                  <span className="act-num">ACT III</span>
+                  <div className="act-details">
+                    <h3 className="act-name">MONOLOGUE CLASH</h3>
+                    <p className="act-desc">One performer under the harsh spotlight. Raw emotional range, voice modulation, and stage presence.</p>
+                  </div>
+                  <div className="act-meta">
+                    <span>SOLO STAGE</span>
+                    <span>5 MINS</span>
+                  </div>
+                </div>
+
+                <div className="act-row">
+                  <span className="act-num">ACT IV</span>
+                  <div className="act-details">
+                    <h3 className="act-name">STREET THEATRE (NUKKAD NATAK)</h3>
+                    <p className="act-desc">Energetic open-air social commentary with rhythmic percussion, live acoustics, and high-energy formations.</p>
+                  </div>
+                  <div className="act-meta">
+                    <span>8–20 ACTORS</span>
+                    <span>OPEN AIR</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="playbill-footer">
+                <button className="theatre-btn theatre-btn-primary" onClick={() => setActiveView('hero')}>
+                  <span>RETURN TO STAGE</span>
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ========================================================
+            CINEMA STAGE PROJECTION: TRAILER VIEW
+            ======================================================== */}
+        {activeView === 'trailer' && (
+          <section className="theatre-projection-overlay">
+            <div className="theatre-screen-frame">
+              <div className="screen-header">
+                <span className="screen-title">OFFICIAL CINEMATIC TRAILER (8K UHD) — THEATRON 2026</span>
+                <button className="screen-close-btn" onClick={() => setActiveView('hero')}>
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="screen-video-box">
+                <video 
+                  ref={trailerVideoRef}
+                  controls 
+                  autoPlay 
+                  playsInline 
+                  src="/assets/full_presentation_8k.mp4" 
+                />
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ========================================================
+            MEDIA & 8K DOWNLOADS VIEW
+            ======================================================== */}
+        {activeView === 'download' && (
+          <section className="theatre-playbill-overlay">
+            <div className="playbill-content-drawer">
+              <div className="playbill-header">
+                <div>
+                  <div className="playbill-kicker">8K ULTRA HD MEDIA ASSETS</div>
+                  <h2 className="playbill-title">DOWNLOAD POLISHED VIDEOS</h2>
+                </div>
+                <button className="playbill-close-btn" onClick={() => setActiveView('hero')}>
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="playbill-acts-list">
+                <a href="/assets/full_presentation_8k.mp4" download="Theatron_Complete_Animation_8K.mp4" className="act-row act-download">
+                  <span className="act-num"><Download size={20} color="#c7a164" /></span>
+                  <div className="act-details">
+                    <h3 className="act-name">8K COMPLETE ANIMATION VIDEO (7680×4320)</h3>
+                    <p className="act-desc">Full 8K UHD: Dark theatre glide → Curtains opening → Smooth zoom & reveal into Main Page with sound.</p>
+                  </div>
+                  <div className="act-meta">
+                    <span className="btn-dl-pill">DOWNLOAD 8K MP4</span>
+                  </div>
+                </a>
+
+                <a href="/assets/intro_8k.mp4" download="Theatron_Curtains_Opening_8K.mp4" className="act-row act-download">
+                  <span className="act-num"><Download size={20} color="#c7a164" /></span>
+                  <div className="act-details">
+                    <h3 className="act-name">8K WATERMARK-FREE INTRO CUT (7680×4320)</h3>
+                    <p className="act-desc">Full 8K UHD: Glides through theatre and stops as curtains open (No watermark, no old text).</p>
+                  </div>
+                  <div className="act-meta">
+                    <span className="btn-dl-pill">DOWNLOAD 8K MP4</span>
+                  </div>
+                </a>
+              </div>
+
+              <div className="theatre-contact-info">
+                <span>📍 CHENNAI INSTITUTE OF TECHNOLOGY</span>
+                <span>✉️ THEATRON@CITCHENNAI.NET</span>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Minimal Theatrical Bottom Credits */}
+        <footer className="theatre-bottom-credits">
+          <div className="credits-left">
+            <button className="scene-replay-btn" onClick={handleReplayIntro} title="Replay Opening Sequence">
               <RotateCcw size={12} />
               <span>REPLAY INTRO</span>
             </button>
-            <button className="btn-replay" onClick={() => setActiveModal('download')} title="Download Cleaned Video Files">
+            <button className="scene-replay-btn" onClick={() => setActiveView('download')} title="8K Video Downloads">
               <Download size={12} />
-              <span>DOWNLOAD VIDEOS</span>
+              <span>8K DOWNLOADS</span>
             </button>
           </div>
 
-          <div className="footer-right">
-            <div className="cit-credit">A THEATRE & CINEMA EXPERIENCE</div>
-            <div className="cit-college">CHENNAI INSTITUTE OF TECHNOLOGY</div>
+          <div className="credits-right">
+            <div className="credit-line-primary">A THEATRE & CINEMA EXPERIENCE</div>
+            <div className="credit-line-secondary">CHENNAI INSTITUTE OF TECHNOLOGY</div>
           </div>
         </footer>
-      </main>
-
-      {/* ========================================================
-          MODAL: FEATURED EVENTS
-          ======================================================== */}
-      {activeModal === 'events' && (
-        <div className="modal-backdrop" onClick={() => setActiveModal(null)}>
-          <div className="modal-box" onClick={e => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setActiveModal(null)}>
-              <X size={16} />
-            </button>
-            <div className="modal-header">
-              <div className="modal-tag">THEATRON 2026 FESTIVAL</div>
-              <h2 className="modal-title">FEATURED EVENTS</h2>
-              <p className="modal-desc">Step into the spotlight and showcase your theatrical and cinematic prowess.</p>
-            </div>
-            <div className="events-grid">
-              <div className="event-card">
-                <div className="event-icon">🎭</div>
-                <h3>The Stage Play (Nataka)</h3>
-                <p>Grand theatrical drama competition. Bring complex human drama, set design, and emotional intensity to life.</p>
-                <div className="event-meta">Team: 6-15 Members • Time: 20 Mins</div>
-              </div>
-              <div className="event-card">
-                <div className="event-icon">🎬</div>
-                <h3>Cinematics (Short Film)</h3>
-                <p>Screening and judging of original short cinema. Direction, narrative cinematography, editing, and sound design.</p>
-                <div className="event-meta">Duration: 7-15 Mins • 4K Screening</div>
-              </div>
-              <div className="event-card">
-                <div className="event-icon">👤</div>
-                <h3>Monologue Clash</h3>
-                <p>One actor. One stage. Pure theatrical expression. Captivate the audience with sheer delivery and presence.</p>
-                <div className="event-meta">Solo • Time: 5 Mins</div>
-              </div>
-              <div className="event-card">
-                <div className="event-icon">🎪</div>
-                <h3>Street Theatre (Nukkad)</h3>
-                <p>Vibrant social satire, booming vocal chorus, and raw acoustic rhythm in the open courtyard.</p>
-                <div className="event-meta">Team: 8-20 Members • High Energy</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================
-          MODAL: WATCH TRAILER
-          ======================================================== */}
-      {activeModal === 'trailer' && (
-        <div className="modal-backdrop" onClick={() => setActiveModal(null)}>
-          <div className="modal-box modal-video-box" onClick={e => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setActiveModal(null)}>
-              <X size={16} />
-            </button>
-            <div className="trailer-wrapper">
-              <video 
-                ref={trailerVideoRef} 
-                controls 
-                autoPlay 
-                playsInline
-                src="/assets/full_presentation.mp4"
-              />
-            </div>
-            <div className="trailer-caption">
-              <h3>THEATRON 2026 — Official Cinematic Teaser</h3>
-              <p>A Theatre & Cinema Experience presented by IMMERSE × Team Resolution at Chennai Institute of Technology.</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================
-          MODAL: DOWNLOAD CLEANED VIDEOS
-          ======================================================== */}
-      {activeModal === 'download' && (
-        <div className="modal-backdrop" onClick={() => setActiveModal(null)}>
-          <div className="modal-box" onClick={e => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setActiveModal(null)}>
-              <X size={16} />
-            </button>
-            <div className="modal-header">
-              <div className="modal-tag">POLISHED MEDIA ASSETS</div>
-              <h2 className="modal-title">DOWNLOAD GENERATED VIDEOS</h2>
-              <p className="modal-desc">Both versions have the Gemini watermark removed frame-by-frame and rendered in 720p H.264.</p>
-            </div>
-            <div className="download-list">
-              <a 
-                href="/assets/full_presentation.mp4" 
-                download="Theatron_Complete_Animation_Video.mp4" 
-                className="download-item"
-              >
-                <div className="download-info">
-                  <strong>1. Complete Animation Video (Full Presentation)</strong>
-                  <span>Dark theatre glide → Curtains opening → Smooth zoom & reveal into Main Page (12.8s)</span>
-                </div>
-                <span className="btn-dl">DOWNLOAD MP4</span>
-              </a>
-              <a 
-                href="/assets/intro.mp4" 
-                download="Theatron_Curtains_Opening_Clean.mp4" 
-                className="download-item"
-              >
-                <div className="download-info">
-                  <strong>2. Cleaned Intro Video (Curtains Opening Cut)</strong>
-                  <span>Glides through theatre and stops right as curtains part (7.8s, No watermark, No old text)</span>
-                </div>
-                <span className="btn-dl">DOWNLOAD MP4</span>
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================
-          MODAL: CONTACT
-          ======================================================== */}
-      {activeModal === 'contact' && (
-        <div className="modal-backdrop" onClick={() => setActiveModal(null)}>
-          <div className="modal-box" onClick={e => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setActiveModal(null)}>
-              <X size={16} />
-            </button>
-            <div className="modal-header">
-              <div className="modal-tag">GET IN TOUCH</div>
-              <h2 className="modal-title">CONNECT WITH THEATRON</h2>
-              <p className="modal-desc">Organized by Team Resolution & IMMERSE at Chennai Institute of Technology.</p>
-            </div>
-            <div style={{ color: '#ccc', lineHeight: 1.8, fontSize: '14px' }}>
-              <p>📍 <strong>Venue:</strong> Chennai Institute of Technology, Kundrathur, Chennai</p>
-              <p>✉️ <strong>Email:</strong> theatron@citchennai.net</p>
-              <p>🎭 <strong>Instagram:</strong> @theatron_cit | @team_resolution</p>
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -186,18 +186,9 @@ export default function TheatronPage() {
 
           {/* Minimal Cinema HUD */}
           <div className="cinema-hud">
-            {isAudioMuted && (
-              <button className="hud-badge pulse-badge" onClick={toggleAudio}>
-                <Volume2 size={13} />
-                <span>ENABLE MILD SOUND</span>
-              </button>
-            )}
             <button className="hud-btn" onClick={triggerCurtainTransition}>
               <span>SKIP TO STAGE</span>
               <ArrowRight size={13} />
-            </button>
-            <button className="hud-btn icon-only" onClick={toggleAudio} title="Toggle Audio">
-              {isAudioMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
             </button>
           </div>
         </div>
@@ -281,24 +272,6 @@ export default function TheatronPage() {
             </button>
           </nav>
         </header>
-
-        {/* Left Side Theatre Rail Controls */}
-        <aside className="theatre-side-rail">
-          <button 
-            className="rail-cinema-btn" 
-            onClick={toggleAudio} 
-            title={isAudioMuted ? "Unmute Theatre Sound" : "Mute Theatre Sound"}
-          >
-            {isAudioMuted ? <VolumeX size={15} /> : <Volume2 size={15} color="#c7a164" />}
-          </button>
-          <button 
-            className="rail-cinema-btn" 
-            onClick={toggleFullscreen} 
-            title="Cinema Fullscreen"
-          >
-            <Maximize2 size={15} />
-          </button>
-        </aside>
 
         {/* ========================================================
             HERO CONTENT: VISUAL HIERARCHY
@@ -543,3 +516,4 @@ export default function TheatronPage() {
     </div>
   );
 }
+

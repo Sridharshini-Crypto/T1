@@ -50,3 +50,4 @@ Located in `public/assets/`:
 - `full_presentation_8k.mp4`: Complete 8K UHD (7680×4320) presentation video.
 - `stage_backdrop_hd.jpg`: Pristine high-resolution theatrical stage artwork.
 - `theatre_audio.mp3`: Atmospheric theatre score.
+
