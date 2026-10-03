@@ -1,0 +1,37 @@
+:root {
+  --bg-dark: #050404;
+  --bg-deep-red: #160305;
+  --text-primary: #f2ece1;
+  --text-gold: #c7a164;
+  --text-muted: #8b7d72;
+  --text-dim: #5c534c;
+  --red-accent: #d32027;
+  --border-subtle: rgba(199, 161, 100, 0.25);
+  --border-btn: rgba(140, 120, 100, 0.35);
+  --font-display: 'Montserrat', sans-serif;
+  --font-serif: 'Playfair Display', serif;
+  --font-classic: 'Cinzel', serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  overflow-x: hidden;
+  user-select: none;
+}
+
+#root {
+  width: 100%;
+  min-height: 100%;
+  position: relative;
+}
+

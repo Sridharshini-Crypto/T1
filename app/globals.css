@@ -1,0 +1,955 @@
+/* ========================================================
+   THEATRON 2026 - NEXT.JS CINEMATIC THEATRE STAGE INTERFACE
+   ======================================================== */
+
+:root {
+  --cinema-black: #040303;
+  --theatre-crimson: #1a0407;
+  --theatre-burgundy: #480d14;
+  --theatre-gold: #c7a164;
+  --theatre-gold-light: #dfbe85;
+  --theatre-bone: #f2ece1;
+  --theatre-parchment: #baa795;
+  --theatre-muted: #82756a;
+  --theatre-dim: #4d443d;
+  --theatre-red-badge: #d32027;
+  --border-theatre-subtle: rgba(199, 161, 100, 0.22);
+  --border-theatre-btn: rgba(160, 130, 100, 0.32);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background-color: var(--cinema-black);
+  color: var(--theatre-bone);
+  font-family: 'Montserrat', sans-serif;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* ========================================================
+   1. VIEWPORT & IMMERSIVE STAGE WRAPPER
+   ======================================================== */
+
+.theatron-stage-viewport {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--cinema-black);
+  overflow: hidden;
+  user-select: none;
+}
+
+/* ========================================================
+   2. INTRO CINEMA LAYER (NO GATE SCREEN - DIRECT VIDEO)
+   ======================================================== */
+
+.intro-cinema-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  background-color: var(--cinema-black);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 1.1s cubic-bezier(0.2, 0.8, 0.2, 1), transform 1.1s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.intro-cinema-layer.transitioning {
+  transform: scale(1.08);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cinema-projection-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Anamorphic Lens Flare Sweep on Curtains Opening */
+.cinema-flash {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(ellipse at 65% 50%, rgba(255, 235, 205, 0.85) 0%, rgba(210, 50, 45, 0.45) 45%, transparent 80%);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 5;
+  transition: opacity 0.45s ease;
+}
+
+.cinema-flash.active {
+  opacity: 1;
+}
+
+/* Cinema HUD during Intro */
+.cinema-hud {
+  position: absolute;
+  bottom: 32px;
+  right: 40px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.hud-btn {
+  background: rgba(12, 10, 10, 0.75);
+  border: 1px solid rgba(199, 161, 100, 0.3);
+  color: var(--theatre-bone);
+  padding: 10px 18px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  border-radius: 2px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.hud-btn:hover {
+  background: rgba(211, 32, 39, 0.85);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.hud-btn.icon-only {
+  padding: 10px 14px;
+}
+
+.hud-badge {
+  background: rgba(211, 32, 39, 0.85);
+  border: 1px solid rgba(255, 200, 200, 0.4);
+  color: #ffffff;
+  padding: 9px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  border-radius: 2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 20px rgba(211, 32, 39, 0.5);
+}
+
+.pulse-badge {
+  animation: theatrePulse 2s infinite ease-in-out;
+}
+
+@keyframes theatrePulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 15px rgba(211, 32, 39, 0.4);
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 0 25px rgba(211, 32, 39, 0.8);
+  }
+}
+
+/* ========================================================
+   3. CONTINUOUS CINEMATIC THEATRE STAGE SCENE
+   ======================================================== */
+
+.theatre-scene-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  background-color: var(--cinema-black);
+}
+
+.theatre-scene-container.prerender {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.theatre-scene-container.visible {
+  opacity: 1;
+  transition: opacity 1.2s ease-out;
+}
+
+/* Theatrical Stage Environment (Dominates right & center) */
+.theatre-stage-environment {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.stage-backdrop-visual {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 70% center;
+  filter: contrast(1.06) brightness(1.0);
+  transform: scale(1.0);
+  transition: transform 14s ease-out;
+}
+
+.theatre-scene-container:hover .stage-backdrop-visual {
+  transform: scale(1.02);
+}
+
+/* Dynamic Spotlight Cone Lighting & Stage Mist */
+.theatre-light-cone {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(ellipse at 72% 45%, rgba(211, 40, 45, 0.08) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* Left gradient to ensure dark auditorium background seamlessly holds text */
+.theatre-edge-vignette {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    rgba(4, 3, 3, 0.98) 0%, 
+    rgba(4, 3, 3, 0.92) 28%, 
+    rgba(4, 3, 3, 0.65) 45%, 
+    rgba(4, 3, 3, 0.1) 68%, 
+    rgba(4, 3, 3, 0.35) 100%);
+  pointer-events: none;
+}
+
+/* Golden Theatre Dust Motes */
+.spotlight-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.dust-mote {
+  position: absolute;
+  background: rgba(255, 230, 200, 0.55);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: floatDust linear infinite;
+  box-shadow: 0 0 4px rgba(255, 210, 160, 0.5);
+}
+
+@keyframes floatDust {
+  0% {
+    transform: translateY(100vh) translateX(0) scale(0.6);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.85;
+  }
+  80% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateY(-15vh) translateX(25px) scale(1.1);
+    opacity: 0;
+  }
+}
+
+/* ========================================================
+   4. MINIMAL ELEGANT TOP BAR
+   ======================================================== */
+
+.theatre-top-bar {
+  position: relative;
+  z-index: 30;
+  width: 100%;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 54px;
+}
+
+/* Left: Theatron Red Trapezoid Logo Badge */
+.theatron-badge-logo {
+  cursor: pointer;
+  display: inline-block;
+  background: linear-gradient(180deg, #d32027 0%, #8c0c11 100%);
+  color: #ffffff;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 900;
+  font-size: 15px;
+  letter-spacing: 2.6px;
+  padding: 6px 18px;
+  transform: perspective(90px) rotateX(12deg);
+  border-radius: 2px;
+  box-shadow: 0 4px 18px rgba(211, 32, 39, 0.55);
+  border-top: 1px solid rgba(255, 255, 255, 0.45);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.theatron-badge-logo:hover {
+  transform: perspective(90px) rotateX(0deg) scale(1.04);
+  box-shadow: 0 6px 24px rgba(211, 32, 39, 0.75);
+}
+
+/* Center: IMMERSE × RS */
+.theatre-collab {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+}
+
+.collab-immerse {
+  color: #ff202b;
+  font-weight: 900;
+  font-size: 15px;
+  letter-spacing: 2.2px;
+}
+
+.collab-cross {
+  color: #7b7168;
+  font-size: 13px;
+  font-weight: 300;
+}
+
+.collab-rs {
+  color: #ffffff;
+  font-weight: 900;
+  font-size: 20px;
+  letter-spacing: 1px;
+}
+
+.collab-team {
+  position: absolute;
+  bottom: -13px;
+  right: 0;
+  font-size: 8px;
+  color: #9c9186;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+}
+
+/* Right Nav */
+.bar-right {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.theatre-nav-link {
+  background: none;
+  border: none;
+  color: #958c82;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 2.5px;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  position: relative;
+  padding: 4px 0;
+}
+
+.theatre-nav-link:hover, .theatre-nav-link.active {
+  color: #ffffff;
+}
+
+.theatre-nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: var(--theatre-gold);
+}
+
+/* ========================================================
+   5. LEFT THEATRE RAIL
+   ======================================================== */
+
+.theatre-side-rail {
+  position: absolute;
+  top: 50%;
+  left: 32px;
+  transform: translateY(-50%);
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rail-cinema-btn {
+  width: 36px;
+  height: 36px;
+  background: rgba(18, 14, 12, 0.75);
+  border: 1px solid rgba(199, 161, 100, 0.28);
+  border-radius: 3px;
+  color: var(--theatre-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: all 0.3s ease;
+}
+
+.rail-cinema-btn:hover {
+  border-color: var(--theatre-gold);
+  color: #ffffff;
+  background: rgba(45, 20, 22, 0.85);
+  box-shadow: 0 0 16px rgba(199, 161, 100, 0.3);
+}
+
+/* ========================================================
+   6. HERO GRID & THEATRON VISUAL HIERARCHY
+   ======================================================== */
+
+.theatre-hero-grid {
+  position: relative;
+  z-index: 20;
+  padding: 0 54px 0 96px;
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.theatre-hero-left {
+  max-width: 580px;
+  display: flex;
+  flex-direction: column;
+  animation: heroReveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes heroReveal {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* THEATRON Main Title Card */
+.hero-brand-block {
+  margin-bottom: 6px;
+}
+
+.hero-theatron-title {
+  font-size: clamp(56px, 7.8vw, 98px);
+  font-weight: 900;
+  letter-spacing: 3px;
+  color: var(--theatre-bone);
+  line-height: 0.92;
+  margin: 0;
+  font-family: 'Montserrat', sans-serif;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.8);
+}
+
+.hero-theatron-year {
+  font-size: clamp(34px, 4.6vw, 56px);
+  font-weight: 700;
+  color: var(--theatre-gold);
+  line-height: 1.05;
+  margin-top: 4px;
+  letter-spacing: 1.5px;
+}
+
+/* Tagline */
+.hero-tagline-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 14px;
+  margin-bottom: 32px;
+}
+
+.tagline-brass-line {
+  display: inline-block;
+  width: 44px;
+  height: 1px;
+  background-color: #5c4d42;
+}
+
+.hero-tagline-text {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: clamp(20px, 2.3vw, 27px);
+  color: var(--theatre-parchment);
+  letter-spacing: 0.5px;
+}
+
+/* Countdown */
+.hero-countdown-block {
+  margin-bottom: 32px;
+}
+
+.countdown-eyebrow {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  color: #8c7f74;
+  margin-bottom: 14px;
+  text-transform: uppercase;
+}
+
+.theatre-countdown-display {
+  display: flex;
+  gap: 24px;
+}
+
+.countdown-dial {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.countdown-dial .dial-value {
+  font-family: 'Montserrat', sans-serif;
+  font-size: clamp(36px, 4.2vw, 48px);
+  font-weight: 300;
+  letter-spacing: 2px;
+  color: var(--theatre-bone);
+  line-height: 1;
+  text-shadow: 0 0 16px rgba(237, 230, 218, 0.25);
+}
+
+.countdown-dial .dial-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: #7a7067;
+  margin-top: 7px;
+}
+
+/* Theatrical Action Buttons */
+.hero-action-row {
+  display: flex;
+  gap: 18px;
+  margin-bottom: 26px;
+  flex-wrap: wrap;
+}
+
+.theatre-btn {
+  background: rgba(16, 12, 11, 0.72);
+  border: 1px solid var(--border-theatre-btn);
+  color: #dcd3c8;
+  padding: 13px 26px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  border-radius: 2px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  backdrop-filter: blur(6px);
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.theatre-btn:hover {
+  background: rgba(55, 20, 25, 0.9);
+  border-color: var(--theatre-gold);
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(199, 161, 100, 0.25);
+}
+
+.theatre-btn-primary .btn-arrow {
+  transition: transform 0.3s ease;
+}
+
+.theatre-btn-primary:hover .btn-arrow {
+  transform: translateX(4px);
+}
+
+/* Curtain Status Line */
+.theatre-status-line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 10.5px;
+  letter-spacing: 2px;
+}
+
+.status-label {
+  color: #73685f;
+  font-weight: 600;
+}
+
+.status-val {
+  color: #968677;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ========================================================
+   7. INTEGRATED THEATRICAL PLAYBILL (EVENTS & DOWNLOADS)
+   ======================================================== */
+
+.theatre-playbill-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 40;
+  background: linear-gradient(90deg, 
+    rgba(4, 3, 3, 0.96) 0%, 
+    rgba(6, 4, 4, 0.94) 52%, 
+    rgba(4, 3, 3, 0.72) 100%);
+  display: flex;
+  align-items: center;
+  padding: 0 54px 0 96px;
+  animation: playbillFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes playbillFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.playbill-content-drawer {
+  max-width: 680px;
+  width: 100%;
+}
+
+.playbill-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  border-bottom: 1px solid var(--border-theatre-subtle);
+  padding-bottom: 16px;
+}
+
+.playbill-kicker {
+  font-size: 11px;
+  letter-spacing: 3.5px;
+  color: var(--theatre-red-badge);
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.playbill-title {
+  font-size: clamp(26px, 3.2vw, 36px);
+  letter-spacing: 2px;
+  color: var(--theatre-bone);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+}
+
+.playbill-close-btn {
+  background: transparent;
+  border: 1px solid rgba(199, 161, 100, 0.3);
+  color: var(--theatre-muted);
+  width: 36px;
+  height: 36px;
+  border-radius: 2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+}
+
+.playbill-close-btn:hover {
+  border-color: var(--theatre-gold);
+  color: #fff;
+  background: rgba(211, 32, 39, 0.8);
+}
+
+.playbill-acts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.act-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 16px 20px;
+  background: rgba(18, 12, 13, 0.6);
+  border: 1px solid rgba(199, 161, 100, 0.16);
+  border-left: 2px solid var(--theatre-gold);
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.act-row:hover {
+  background: rgba(45, 15, 20, 0.85);
+  border-color: var(--theatre-gold);
+  transform: translateX(4px);
+}
+
+.act-num {
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--theatre-gold);
+  white-space: nowrap;
+  padding-top: 2px;
+}
+
+.act-details {
+  flex: 1;
+}
+
+.act-name {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--theatre-bone);
+  margin-bottom: 4px;
+}
+
+.act-desc {
+  font-size: 12.5px;
+  color: var(--theatre-parchment);
+  line-height: 1.5;
+}
+
+.act-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 10.5px;
+  color: #928376;
+  letter-spacing: 1.5px;
+  text-align: right;
+  white-space: nowrap;
+  padding-top: 2px;
+}
+
+.act-download {
+  cursor: pointer;
+}
+
+.btn-dl-pill {
+  background: var(--theatre-red-badge);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  padding: 6px 14px;
+  border-radius: 2px;
+}
+
+.playbill-footer {
+  display: flex;
+  gap: 16px;
+}
+
+.theatre-contact-info {
+  display: flex;
+  gap: 24px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--theatre-muted);
+  border-top: 1px solid rgba(199, 161, 100, 0.15);
+  padding-top: 16px;
+}
+
+/* ========================================================
+   8. CINEMA STAGE PROJECTION (TRAILER)
+   ======================================================== */
+
+.theatre-projection-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 40;
+  background: rgba(3, 2, 2, 0.94);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  animation: playbillFadeIn 0.35s ease forwards;
+}
+
+.theatre-screen-frame {
+  max-width: 960px;
+  width: 100%;
+  border: 1px solid var(--border-theatre-subtle);
+  background: #000;
+  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.9), 0 0 50px rgba(211, 32, 39, 0.25);
+  padding: 16px;
+}
+
+.screen-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 0 4px;
+}
+
+.screen-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  color: var(--theatre-gold);
+}
+
+.screen-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--theatre-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.screen-close-btn:hover {
+  color: #fff;
+}
+
+.screen-video-box {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  overflow: hidden;
+}
+
+.screen-video-box video {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ========================================================
+   9. BOTTOM THEATRICAL CREDITS
+   ======================================================== */
+
+.theatre-bottom-credits {
+  position: relative;
+  z-index: 30;
+  width: 100%;
+  padding: 18px 54px 22px 54px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.credits-left {
+  display: flex;
+  gap: 12px;
+}
+
+.scene-replay-btn {
+  background: rgba(18, 14, 14, 0.65);
+  border: 1px solid var(--border-theatre-subtle);
+  color: var(--theatre-muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  padding: 7px 14px;
+  border-radius: 2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  backdrop-filter: blur(4px);
+  transition: all 0.3s ease;
+}
+
+.scene-replay-btn:hover {
+  color: #ffffff;
+  border-color: var(--theatre-gold);
+  background: rgba(45, 18, 22, 0.85);
+}
+
+.credits-right {
+  text-align: right;
+}
+
+.credit-line-primary {
+  font-size: 10.5px;
+  color: #796f66;
+  letter-spacing: 2.2px;
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.credit-line-secondary {
+  font-size: 9.5px;
+  color: #5c544d;
+  letter-spacing: 2px;
+  font-weight: 500;
+}
+
+/* ========================================================
+   10. RESPONSIVE BREAKPOINTS
+   ======================================================== */
+
+@media (max-width: 900px) {
+  .theatre-top-bar {
+    padding: 0 24px;
+  }
+  .bar-right {
+    display: none;
+  }
+  .theatre-side-rail {
+    display: none;
+  }
+  .theatre-hero-grid {
+    padding: 0 24px;
+  }
+  .theatre-playbill-overlay {
+    padding: 0 24px;
+  }
+  .theatre-bottom-credits {
+    padding: 16px 24px;
+    flex-direction: column-reverse;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .credits-right {
+    text-align: left;
+  }
+}
