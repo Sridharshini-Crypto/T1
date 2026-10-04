@@ -4,17 +4,12 @@
 
 :root {
   --cinema-black: #040303;
-  --theatre-crimson: #1a0407;
-  --theatre-burgundy: #480d14;
   --theatre-gold: #baa072;
   --theatre-gold-light: #dfbe85;
   --theatre-bone: #ede6dc;
   --theatre-parchment: #ded6cb;
   --theatre-muted: #8e8072;
-  --theatre-dim: #4d443d;
   --theatre-red-badge: #d32027;
-  --border-theatre-subtle: rgba(186, 160, 114, 0.25);
-  --border-theatre-btn: rgba(186, 160, 114, 0.45);
 }
 
 * {
@@ -47,7 +42,7 @@ html, body {
 }
 
 /* ========================================================
-   2. INTRO CINEMA LAYER (DIRECT VIDEO - NO GATE SCREEN)
+   2. INTRO CINEMA LAYER (DIRECT 8K/4K VIDEO)
    ======================================================== */
 
 .intro-cinema-layer {
@@ -131,7 +126,7 @@ html, body {
 }
 
 /* ========================================================
-   3. THEATRE STAGE ENVIRONMENT & BACKDROP
+   3. THEATRE STAGE ENVIRONMENT & CANVAS
    ======================================================== */
 
 .theatre-scene-container {
@@ -160,369 +155,192 @@ html, body {
   width: 100%;
   height: 100%;
   z-index: 1;
-  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--cinema-black);
+}
+
+/* Wide cinematic canvas preserving exact 1024x461 aspect ratio without any distortion */
+.theatre-stage-canvas {
+  position: relative;
+  width: 100vw;
+  height: calc(100vw * 461 / 1024);
+  max-height: 100vh;
+  max-width: calc(100vh * 1024 / 461);
+  aspect-ratio: 1024 / 461;
 }
 
 .stage-backdrop-visual {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: center center;
+  object-fit: contain;
+  display: block;
 }
 
-/* ========================================================
-   4. TOP THEATRICAL BAR (EXACT LOGOS & NAVIGATION)
-   ======================================================== */
-
-.theatre-top-bar {
+/* Golden Theatre Dust Motes */
+.spotlight-particles {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  height: 64px;
-  z-index: 30;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 48px;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 15;
 }
 
-.theatron-brand-logo-img {
-  height: 24px;
-  width: auto;
-  object-fit: contain;
-  cursor: pointer;
-  filter: drop-shadow(0 2px 8px rgba(211, 32, 39, 0.5));
-  transition: transform 0.25s ease;
-}
-
-.theatron-brand-logo-img:hover {
-  transform: scale(1.05);
-}
-
-.theatron-collab-logo-img {
-  height: 28px;
-  width: auto;
-  object-fit: contain;
-}
-
-.bar-right {
-  display: flex;
-  align-items: center;
-  gap: 28px;
-}
-
-.theatre-nav-link {
-  background: none;
-  border: none;
-  color: #a8a096;
-  font-family: 'Montserrat', sans-serif;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 2.2px;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: color 0.3s ease;
-  padding: 4px 0;
-}
-
-.theatre-nav-link:hover, .theatre-nav-link.active {
-  color: #ffffff;
-}
-
-/* ========================================================
-   5. HERO CONTENT: EXACT TYPOGRAPHY & LAYOUT
-   ======================================================== */
-
-.theatre-hero-left {
+.dust-mote {
   position: absolute;
-  left: 4.8vw;
-  top: 18.5vh;
-  max-width: 520px;
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  animation: heroReveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  background: rgba(255, 230, 200, 0.65);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: floatDust linear infinite;
+  box-shadow: 0 0 4px rgba(255, 210, 160, 0.6);
 }
 
-@keyframes heroReveal {
-  from {
+@keyframes floatDust {
+  0% {
+    transform: translateY(100%) scale(0.6);
     opacity: 0;
-    transform: translateX(-16px);
   }
-  to {
-    opacity: 1;
-    transform: translateX(0);
+  20% {
+    opacity: 0.85;
   }
-}
-
-.hero-brand-block {
-  margin-bottom: 4px;
-}
-
-.hero-theatron-title {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: clamp(70px, 8.5vw, 116px);
-  font-weight: 400;
-  line-height: 0.88;
-  letter-spacing: 2px;
-  color: #ede6dc;
-  margin: 0;
-  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.8);
-}
-
-.hero-theatron-year {
-  font-family: 'Montserrat', sans-serif;
-  font-size: clamp(26px, 3.2vw, 42px);
-  font-weight: 700;
-  letter-spacing: 3.5px;
-  color: #baa072;
-  margin-top: 2px;
-  margin-bottom: 22px;
-}
-
-/* Tagline Row */
-.hero-tagline-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 26px;
-}
-
-.theatre-social-box {
-  width: 24px;
-  height: 24px;
-  border: 1px solid rgba(186, 160, 114, 0.35);
-  border-radius: 3px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #baa072;
-  background: rgba(12, 10, 10, 0.45);
-  text-decoration: none;
-  transition: all 0.25s ease;
-}
-
-.theatre-social-box:hover {
-  border-color: #baa072;
-  color: #ffffff;
-  background: rgba(45, 18, 22, 0.85);
-}
-
-.tagline-brass-line {
-  display: inline-block;
-  width: 40px;
-  height: 1px;
-  background-color: rgba(186, 160, 114, 0.5);
-}
-
-.hero-tagline-text {
-  font-family: 'Cormorant Garamond', serif;
-  font-style: italic;
-  font-size: clamp(18px, 2.1vw, 25px);
-  color: #ded6cb;
-  letter-spacing: 0.4px;
-}
-
-/* Countdown */
-.hero-countdown-block {
-  margin-bottom: 26px;
-}
-
-.countdown-eyebrow {
-  display: block;
-  font-size: 9.5px;
-  font-weight: 600;
-  letter-spacing: 2.6px;
-  color: #8e8072;
-  text-transform: uppercase;
-  margin-bottom: 12px;
-}
-
-.theatre-countdown-display {
-  display: flex;
-  align-items: flex-end;
-  gap: 34px;
-}
-
-.countdown-dial {
-  display: flex;
-  flex-direction: column;
-}
-
-.countdown-dial .dial-value {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: clamp(44px, 5.2vw, 68px);
-  color: #ede6dc;
-  line-height: 0.95;
-  letter-spacing: 2px;
-}
-
-.countdown-dial .dial-label {
-  font-size: 8.5px;
-  font-weight: 600;
-  letter-spacing: 2.2px;
-  color: #7f7265;
-  margin-top: 4px;
-  text-transform: uppercase;
-}
-
-/* Action Buttons */
-.hero-action-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-}
-
-.theatre-btn {
-  padding: 12px 26px;
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  border-radius: 2px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  transition: all 0.3s ease;
-  font-family: 'Montserrat', sans-serif;
-}
-
-.theatre-btn-primary {
-  background: rgba(18, 14, 14, 0.65);
-  border: 1px solid rgba(186, 160, 114, 0.45);
-  color: #eae4d9;
-}
-
-.theatre-btn-primary:hover {
-  background: rgba(186, 160, 114, 0.15);
-  border-color: rgba(220, 190, 140, 0.8);
-  color: #ffffff;
-}
-
-.theatre-btn-primary .btn-arrow {
-  transition: transform 0.3s ease;
-}
-
-.theatre-btn-primary:hover .btn-arrow {
-  transform: translateX(4px);
-}
-
-.theatre-btn-secondary {
-  background: transparent;
-  border: 1px solid rgba(160, 130, 95, 0.3);
-  color: #baa795;
-}
-
-.theatre-btn-secondary:hover {
-  border-color: rgba(186, 160, 114, 0.6);
-  color: #ede6dc;
-}
-
-/* Curtain Status Line */
-.theatre-status-line {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 9.5px;
-  font-weight: 600;
-  letter-spacing: 2px;
-  color: #baa072;
-  text-transform: uppercase;
-}
-
-.status-label {
-  color: #baa072;
-}
-
-.status-val {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #baa072;
+  80% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateY(-10%) scale(1.1);
+    opacity: 0;
+  }
 }
 
 /* ========================================================
-   6. BOTTOM BADGE & CREDITS
+   4. PIXEL-PERFECT INTERACTIVE HOTSPOTS
    ======================================================== */
 
-.theatre-bottom-left-badge {
+.hotspot-btn {
   position: absolute;
-  left: 34px;
-  bottom: 26px;
-  z-index: 10;
-}
-
-.theatre-bottom-left-badge img {
-  width: 32px;
-  height: 32px;
-  object-fit: contain;
-  opacity: 0.85;
   cursor: pointer;
-  transition: opacity 0.25s ease;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  transition: all 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  z-index: 25;
+  outline: none;
 }
 
-.theatre-bottom-left-badge img:hover {
-  opacity: 1;
+/* Top Left THEATRON Logo */
+.hotspot-theatron-logo {
+  left: 4.39%;
+  top: 1.08%;
+  width: 10.25%;
+  height: 5.42%;
 }
 
-/* Far Right Vertical Indicator (06 | 01) */
-.theatre-vertical-indicator {
-  position: absolute;
-  right: 28px;
-  top: 58%;
-  transform: translateY(-50%);
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
+.hotspot-theatron-logo:hover {
+  box-shadow: 0 0 16px rgba(211, 32, 39, 0.7);
+  border-color: rgba(211, 32, 39, 0.5);
+  backdrop-filter: brightness(1.2);
 }
 
-.theatre-vertical-indicator span {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 1px;
-  color: #8e8072;
+/* Top Right Nav Links */
+.hotspot-home {
+  left: 74.22%;
+  top: 2.17%;
+  width: 4.2%;
+  height: 4.34%;
 }
 
-.theatre-vertical-indicator .vert-line {
-  width: 1px;
-  height: 26px;
-  background: rgba(142, 128, 114, 0.4);
+.hotspot-events {
+  left: 79.59%;
+  top: 2.17%;
+  width: 5.2%;
+  height: 4.34%;
 }
 
-/* Bottom Right Credits */
-.theatre-bottom-right-credits {
-  position: absolute;
-  right: 40px;
-  bottom: 26px;
-  z-index: 10;
-  text-align: right;
+.hotspot-gallery {
+  left: 85.94%;
+  top: 2.17%;
+  width: 5.86%;
+  height: 4.34%;
 }
 
-.credit-line-primary {
-  font-size: 9.5px;
-  font-weight: 600;
-  letter-spacing: 2.4px;
-  color: #85786c;
-  margin-bottom: 3px;
-  text-transform: uppercase;
+.hotspot-contact {
+  left: 92.77%;
+  top: 2.17%;
+  width: 5.86%;
+  height: 4.34%;
 }
 
-.credit-line-secondary {
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 2.2px;
-  color: #695e54;
-  text-transform: uppercase;
+.hotspot-nav:hover {
+  border-bottom: 2px solid rgba(186, 160, 114, 0.9);
+  backdrop-filter: brightness(1.3);
+}
+
+/* Instagram Box */
+.hotspot-social {
+  left: 1.17%;
+  top: 51.19%;
+  width: 2.25%;
+  height: 5.21%;
+  text-decoration: none;
+}
+
+.hotspot-social:hover {
+  border-color: rgba(186, 160, 114, 0.85);
+  box-shadow: 0 0 14px rgba(186, 160, 114, 0.6);
+  backdrop-filter: brightness(1.25);
+  transform: scale(1.08);
+}
+
+/* [ EXPLORE EVENTS → ] Action Button */
+.hotspot-explore-events {
+  left: 4.69%;
+  top: 80.26%;
+  width: 13.87%;
+  height: 9.76%;
+}
+
+.hotspot-explore-events:hover {
+  border-color: rgba(186, 160, 114, 0.85);
+  box-shadow: 0 0 24px rgba(186, 160, 114, 0.55), inset 0 0 14px rgba(186, 160, 114, 0.2);
+  transform: translateY(-2px);
+  backdrop-filter: brightness(1.15);
+}
+
+/* [ ▷ WATCH TRAILER ] Action Button */
+.hotspot-watch-trailer {
+  left: 20.02%;
+  top: 80.26%;
+  width: 13.67%;
+  height: 9.76%;
+}
+
+.hotspot-watch-trailer:hover {
+  border-color: rgba(186, 160, 114, 0.85);
+  box-shadow: 0 0 24px rgba(186, 160, 114, 0.55), inset 0 0 14px rgba(186, 160, 114, 0.2);
+  transform: translateY(-2px);
+  backdrop-filter: brightness(1.15);
+}
+
+/* Bottom Left Badge */
+.hotspot-badge-bl {
+  left: 1.46%;
+  top: 91.11%;
+  width: 2.93%;
+  height: 7.59%;
+  border-radius: 50%;
+}
+
+.hotspot-badge-bl:hover {
+  box-shadow: 0 0 16px rgba(186, 160, 114, 0.7);
+  transform: scale(1.1);
 }
 
 /* ========================================================
-   7. EVENTS & PLAYBILL OVERLAY
+   5. PLAYBILL & TRAILER MODALS
    ======================================================== */
 
 .theatre-playbill-overlay {
@@ -531,11 +349,11 @@ html, body {
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 40;
+  z-index: 50;
   background: linear-gradient(90deg, 
     rgba(4, 3, 3, 0.97) 0%, 
     rgba(6, 4, 4, 0.95) 55%, 
-    rgba(4, 3, 3, 0.8) 100%);
+    rgba(4, 3, 3, 0.82) 100%);
   display: flex;
   align-items: center;
   padding: 0 54px 0 96px;
@@ -563,7 +381,7 @@ html, body {
   align-items: flex-start;
   justify-content: space-between;
   margin-bottom: 28px;
-  border-bottom: 1px solid var(--border-theatre-subtle);
+  border-bottom: 1px solid rgba(186, 160, 114, 0.25);
   padding-bottom: 16px;
 }
 
@@ -678,10 +496,7 @@ html, body {
   padding-top: 16px;
 }
 
-/* ========================================================
-   8. TRAILER MODAL
-   ======================================================== */
-
+/* Trailer Modal */
 .theatre-trailer-modal {
   position: fixed;
   top: 0;
@@ -758,28 +573,4 @@ html, body {
   width: 100%;
   height: 100%;
   display: block;
-}
-
-/* ========================================================
-   9. RESPONSIVE BREAKPOINTS
-   ======================================================== */
-
-@media (max-width: 900px) {
-  .theatre-top-bar {
-    padding: 16px 24px;
-  }
-  .bar-right {
-    display: none;
-  }
-  .theatre-hero-left {
-    left: 24px;
-    top: 14vh;
-  }
-  .theatre-vertical-indicator {
-    display: none;
-  }
-  .theatre-bottom-right-credits {
-    right: 24px;
-    bottom: 20px;
-  }
 }

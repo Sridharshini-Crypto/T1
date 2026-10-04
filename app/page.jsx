@@ -6,8 +6,9 @@ import {
   Calendar, 
   ArrowRight, 
   X, 
-  Instagram,
-  Film
+  Film,
+  Sparkles,
+  RotateCcw
 } from 'lucide-react';
 
 export default function TheatronPage() {
@@ -20,7 +21,7 @@ export default function TheatronPage() {
   const bgAudioRef = useRef(null);
   const trailerVideoRef = useRef(null);
 
-  // 1. Direct Start: Video autoplays muted immediately, mild audio (0.28) unfreezes on first interaction
+  // 1. Direct Start: Ultra-high quality video autoplays immediately muted; mild audio (0.28) unfreezes on first touch/click
   useEffect(() => {
     const video = introVideoRef.current;
     if (video) {
@@ -87,6 +88,15 @@ export default function TheatronPage() {
     }
   };
 
+  // Graceful video fallback in case of extreme GPU decoder constraints
+  const handleVideoFallback = () => {
+    if (introVideoRef.current) {
+      console.warn("Falling back to standard stream");
+      introVideoRef.current.src = '/assets/intro.mp4';
+      introVideoRef.current.play().catch(() => {});
+    }
+  };
+
   // Replay intro video
   const handleReplayIntro = () => {
     setActiveView('hero');
@@ -96,7 +106,7 @@ export default function TheatronPage() {
       introVideoRef.current.currentTime = 0;
       introVideoRef.current.volume = 0.28;
       introVideoRef.current.muted = false;
-      introVideoRef.current.play();
+      introVideoRef.current.play().catch(() => {});
     }
   };
 
@@ -106,8 +116,8 @@ export default function TheatronPage() {
       <audio ref={bgAudioRef} src="/assets/theatre_audio.mp3" loop />
 
       {/* ========================================================
-          1. INTRO: DIRECT THEATRE CAMERA & CURTAINS SEQUENCE
-          No watermark, exact native quality, no gate screens.
+          1. INTRO: DIRECT 8K/4K THEATRE CAMERA & CURTAINS SEQUENCE
+          No watermark, exact native/upscaled 8K clarity, no gate screens.
           ======================================================== */}
       {!isIntroDone && (
         <div className={`intro-cinema-layer ${transitioning ? 'transitioning' : ''}`}>
@@ -120,7 +130,10 @@ export default function TheatronPage() {
             preload="auto"
             onTimeUpdate={handleVideoTimeUpdate}
             onEnded={triggerCurtainTransition}
+            onError={handleVideoFallback}
           >
+            <source src="/assets/intro_4k.mp4" type="video/mp4" />
+            <source src="/assets/intro_8k.mp4" type="video/mp4" />
             <source src="/assets/intro.mp4" type="video/mp4" />
           </video>
 
@@ -139,160 +152,112 @@ export default function TheatronPage() {
 
       {/* ========================================================
           2. MAIN THEATRICAL STAGE EXPERIENCE
-          Exact replica of the provided visual source of truth
+          Exact 100% faithful replica of the source of truth image
           ======================================================== */}
       <div className={`theatre-scene-container ${isIntroDone ? 'visible' : 'prerender'}`}>
-        {/* Full-bleed Pristine Stage Backdrop */}
         <div className="theatre-stage-environment">
-          <img 
-            src="/assets/stage_backdrop_hd.jpg" 
-            alt="Theatron 2026 Stage" 
-            className="stage-backdrop-visual" 
-          />
-        </div>
-
-        {/* Minimalist Top Theatrical Bar */}
-        <header className="theatre-top-bar">
-          <div className="bar-left">
+          <div className="theatre-stage-canvas">
+            {/* The exact 4K pristine main page stage visual */}
             <img 
-              src="/assets/logo_theatron_red.png" 
-              alt="THEATRON" 
-              className="theatron-brand-logo-img" 
+              src="/assets/main_stage_exact_hd.png" 
+              alt="Theatron 2026 Theatrical Stage Experience" 
+              className="stage-backdrop-visual" 
+            />
+
+            {/* ========================================================
+                PIXEL-PERFECT INTERACTIVE HOTSPOTS
+                Mapped directly over the exact image elements
+                ======================================================== */}
+
+            {/* 1. Top Bar: THEATRON Logo (Top Left) */}
+            <button 
+              className="hotspot-btn hotspot-theatron-logo" 
               onClick={handleReplayIntro} 
-              title="Replay Opening Sequence" 
+              title="Replay Opening Sequence"
+              aria-label="Replay Opening Sequence"
             />
-          </div>
 
-          <div className="bar-center">
-            <img 
-              src="/assets/logo_collab_exact.png" 
-              alt="IMMERSE x RS TEAM RESOLUTION" 
-              className="theatron-collab-logo-img" 
+            {/* 2. Top Bar: Navigation Links (Top Right) */}
+            <button 
+              className="hotspot-btn hotspot-nav hotspot-home" 
+              onClick={() => setActiveView('hero')} 
+              title="Home"
+              aria-label="Home"
             />
+            <button 
+              className="hotspot-btn hotspot-nav hotspot-events" 
+              onClick={() => setActiveView('events')} 
+              title="Events Repertoire"
+              aria-label="Events"
+            />
+            <button 
+              className="hotspot-btn hotspot-nav hotspot-gallery" 
+              onClick={() => setActiveView('events')} 
+              title="Gallery"
+              aria-label="Gallery"
+            />
+            <button 
+              className="hotspot-btn hotspot-nav hotspot-contact" 
+              onClick={() => setActiveView('events')} 
+              title="Contact & Info"
+              aria-label="Contact"
+            />
+
+            {/* 3. Hero Left: Instagram Icon Box */}
+            <a 
+              href="https://www.instagram.com" 
+              target="_blank" 
+              rel="noreferrer" 
+              className="hotspot-btn hotspot-social" 
+              title="Follow on Instagram"
+              aria-label="Follow on Instagram"
+            />
+
+            {/* 4. Hero Left: [ EXPLORE EVENTS → ] Action Button */}
+            <button 
+              className="hotspot-btn hotspot-action hotspot-explore-events" 
+              onClick={() => setActiveView('events')} 
+              title="Explore Festival Events"
+              aria-label="Explore Events"
+            />
+
+            {/* 5. Hero Left: [ ▷ WATCH TRAILER ] Action Button */}
+            <button 
+              className="hotspot-btn hotspot-action hotspot-watch-trailer" 
+              onClick={() => setActiveView('trailer')} 
+              title="Watch Official Teaser"
+              aria-label="Watch Trailer"
+            />
+
+            {/* 6. Bottom Left: (N) Circular Badge */}
+            <button 
+              className="hotspot-btn hotspot-badge-bl" 
+              onClick={handleReplayIntro} 
+              title="Replay Opening Sequence"
+              aria-label="Replay Intro"
+            />
+
+            {/* Subtle Golden Theatre Dust Motes rising through the red spotlight */}
+            <div className="spotlight-particles">
+              {[...Array(24)].map((_, i) => (
+                <span
+                  key={i}
+                  className="dust-mote"
+                  style={{
+                    width: `${(i % 3) + 1.2}px`,
+                    height: `${(i % 3) + 1.2}px`,
+                    left: `${64 + ((i * 3.4) % 24)}%`,
+                    animationDuration: `${7 + (i % 8)}s`,
+                    animationDelay: `${(i * 0.35) % 5}s`,
+                  }}
+                />
+              ))}
+            </div>
           </div>
-
-          <nav className="bar-right">
-            <button 
-              className={`theatre-nav-link ${activeView === 'hero' ? 'active' : ''}`}
-              onClick={() => setActiveView('hero')}
-            >
-              HOME
-            </button>
-            <button 
-              className={`theatre-nav-link ${activeView === 'events' ? 'active' : ''}`}
-              onClick={() => setActiveView('events')}
-            >
-              EVENTS
-            </button>
-            <button 
-              className="theatre-nav-link"
-              onClick={() => setActiveView('events')}
-            >
-              GALLERY
-            </button>
-            <button 
-              className="theatre-nav-link"
-              onClick={() => setActiveView('events')}
-            >
-              CONTACT
-            </button>
-          </nav>
-        </header>
-
-        {/* ========================================================
-            HERO CONTENT: EXACT TYPOGRAPHY & LAYOUT
-            ======================================================== */}
-        {activeView === 'hero' && (
-          <main className="theatre-hero-left">
-            {/* THEATRON & 2026 */}
-            <div className="hero-brand-block">
-              <h1 className="hero-theatron-title">THEATRON</h1>
-              <div className="hero-theatron-year">2026</div>
-            </div>
-
-            {/* Tagline Row: [📷] ── Where stories come alive. */}
-            <div className="hero-tagline-wrapper">
-              <a 
-                href="https://instagram.com" 
-                target="_blank" 
-                rel="noreferrer" 
-                className="theatre-social-box"
-                title="Follow on Instagram"
-              >
-                <Instagram size={13} strokeWidth={1.8} />
-              </a>
-              <span className="tagline-brass-line" />
-              <p className="hero-tagline-text">Where stories come alive.</p>
-            </div>
-
-            {/* Event Countdown */}
-            <div className="hero-countdown-block">
-              <span className="countdown-eyebrow">YOUR SHOW BEGINS IN</span>
-              <div className="theatre-countdown-display">
-                <div className="countdown-dial">
-                  <span className="dial-value">00</span>
-                  <span className="dial-label">DAYS</span>
-                </div>
-                <div className="countdown-dial">
-                  <span className="dial-value">00</span>
-                  <span className="dial-label">HOURS</span>
-                </div>
-                <div className="countdown-dial">
-                  <span className="dial-value">00</span>
-                  <span className="dial-label">MINUTES</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="hero-action-row">
-              <button 
-                className="theatre-btn theatre-btn-primary"
-                onClick={() => setActiveView('events')}
-              >
-                <span>EXPLORE EVENTS</span>
-                <ArrowRight size={13} className="btn-arrow" />
-              </button>
-              <button 
-                className="theatre-btn theatre-btn-secondary"
-                onClick={() => setActiveView('trailer')}
-              >
-                <Play size={12} fill="currentColor" />
-                <span>WATCH TRAILER</span>
-              </button>
-            </div>
-
-            {/* Status line */}
-            <div className="theatre-status-line">
-              <span className="status-label">CURTAIN RISES</span>
-              <span className="status-val">
-                <Calendar size={13} />
-                <span>DATES TO BE ANNOUNCED</span>
-              </span>
-            </div>
-          </main>
-        )}
-
-        {/* Bottom Left Circular Badge */}
-        <div className="theatre-bottom-left-badge" onClick={handleReplayIntro} title="Replay Opening Sequence">
-          <img src="/assets/badge_bottom_left.png" alt="Badge" />
         </div>
 
-        {/* Far Right Vertical Indicator (06 | 01) */}
-        <div className="theatre-vertical-indicator">
-          <span>06</span>
-          <span className="vert-line" />
-          <span>01</span>
-        </div>
-
-        {/* Bottom Right Minimal Credits */}
-        <footer className="theatre-bottom-right-credits">
-          <div className="credit-line-primary">A THEATRE & CINEMA EXPERIENCE</div>
-          <div className="credit-line-secondary">CHENNAI INSTITUTE OF TECHNOLOGY</div>
-        </footer>
-
         {/* ========================================================
-            INTEGRATED THEATRICAL PLAYBILL: EVENTS VIEW
+            3. FESTIVAL EVENTS REPERTOIRE (ACTS I–IV) MODAL
             ======================================================== */}
         {activeView === 'events' && (
           <section className="theatre-playbill-overlay">
@@ -366,7 +331,7 @@ export default function TheatronPage() {
         )}
 
         {/* ========================================================
-            CINEMATIC TRAILER PREVIEW MODAL
+            4. CINEMATIC TRAILER PREVIEW MODAL
             ======================================================== */}
         {activeView === 'trailer' && (
           <div className="theatre-trailer-modal">
@@ -374,7 +339,7 @@ export default function TheatronPage() {
             <div className="trailer-modal-window">
               <div className="trailer-header">
                 <div className="trailer-title">
-                  <Film size={16} color="#c7a164" />
+                  <Film size={16} color="#baa072" />
                   <span>THEATRON 2026 OFFICIAL TEASER</span>
                 </div>
                 <button className="trailer-close-btn" onClick={() => setActiveView('hero')}>
