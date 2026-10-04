@@ -7,64 +7,58 @@ import {
   ArrowRight, 
   X, 
   Film,
-  Sparkles,
-  RotateCcw
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 
 export default function TheatronPage() {
   const [transitioning, setTransitioning] = useState(false);
   const [isIntroDone, setIsIntroDone] = useState(false);
   const [flashActive, setFlashActive] = useState(false);
+  const [isAudioMuted, setIsAudioMuted] = useState(false);
   const [activeView, setActiveView] = useState('hero'); // 'hero' | 'events' | 'trailer'
 
   const introVideoRef = useRef(null);
   const bgAudioRef = useRef(null);
   const trailerVideoRef = useRef(null);
 
-  // 1. Direct Start: Ultra-high quality video autoplays immediately muted; mild audio (0.28) unfreezes on first touch/click
+  // 1. Direct Start: Native video autoplays immediately edge-to-edge with mild atmospheric sound
   useEffect(() => {
     const video = introVideoRef.current;
     if (video) {
-      video.muted = true;
-      video.defaultMuted = true;
       video.volume = 0.28;
 
       const playPromise = video.play();
       if (playPromise !== undefined) {
-        playPromise.catch((err) => {
-          console.log("Autoplay waiting for user gesture:", err);
-          video.muted = true;
-          video.play().catch(() => {});
-        });
-      }
-
-      // Smoothly activate mild atmospheric sound (0.28) on first user interaction anywhere
-      const unlockAudio = () => {
-        if (video) {
-          if (video.paused) {
+        playPromise
+          .then(() => {
+            setIsAudioMuted(false);
+          })
+          .catch(() => {
+            // If browser blocks unmuted audio on load, start muted immediately so video glides without delay
+            video.muted = true;
+            setIsAudioMuted(true);
             video.play().catch(() => {});
-          }
-          video.muted = false;
-          video.volume = 0.28;
-        }
-        window.removeEventListener('click', unlockAudio);
-        window.removeEventListener('keydown', unlockAudio);
-        window.removeEventListener('touchstart', unlockAudio);
-      };
 
-      window.addEventListener('click', unlockAudio, { once: true });
-      window.addEventListener('keydown', unlockAudio, { once: true });
-      window.addEventListener('touchstart', unlockAudio, { once: true });
+            // Smoothly activate mild atmospheric sound (0.28) on first user interaction anywhere
+            const unlockAudio = () => {
+              video.muted = false;
+              video.volume = 0.28;
+              setIsAudioMuted(false);
+              window.removeEventListener('click', unlockAudio);
+              window.removeEventListener('keydown', unlockAudio);
+              window.removeEventListener('touchstart', unlockAudio);
+            };
 
-      return () => {
-        window.removeEventListener('click', unlockAudio);
-        window.removeEventListener('keydown', unlockAudio);
-        window.removeEventListener('touchstart', unlockAudio);
-      };
+            window.addEventListener('click', unlockAudio, { once: true });
+            window.addEventListener('keydown', unlockAudio, { once: true });
+            window.addEventListener('touchstart', unlockAudio, { once: true });
+          });
+      }
     }
   }, []);
 
-  // 2. Curtains opening transition logic (at ~7.3s)
+  // 2. Curtains opening transition logic (at ~7.35s when curtains have fully parted and empty dark screen is revealed)
   const triggerCurtainTransition = () => {
     if (transitioning || isIntroDone) return;
     setFlashActive(true);
@@ -83,17 +77,27 @@ export default function TheatronPage() {
   };
 
   const handleVideoTimeUpdate = () => {
-    if (introVideoRef.current && introVideoRef.current.currentTime >= 7.3) {
+    // Cut immediately after curtains open and empty dark screen is revealed (before any text appears)
+    if (introVideoRef.current && introVideoRef.current.currentTime >= 7.35) {
       triggerCurtainTransition();
     }
   };
 
-  // Graceful video fallback in case of extreme GPU decoder constraints
-  const handleVideoFallback = () => {
+  // Toggle Audio
+  const toggleAudio = (e) => {
+    if (e) e.stopPropagation();
+    const nextState = !isAudioMuted;
+    setIsAudioMuted(nextState);
     if (introVideoRef.current) {
-      console.warn("Falling back to standard stream");
-      introVideoRef.current.src = '/assets/intro.mp4';
-      introVideoRef.current.play().catch(() => {});
+      introVideoRef.current.muted = nextState;
+      if (!nextState) introVideoRef.current.volume = 0.28;
+    }
+    if (bgAudioRef.current) {
+      bgAudioRef.current.muted = nextState;
+      if (!nextState) {
+        bgAudioRef.current.volume = 0.25;
+        bgAudioRef.current.play().catch(() => {});
+      }
     }
   };
 
@@ -116,8 +120,8 @@ export default function TheatronPage() {
       <audio ref={bgAudioRef} src="/assets/theatre_audio.mp3" loop />
 
       {/* ========================================================
-          1. INTRO: DIRECT 8K/4K THEATRE CAMERA & CURTAINS SEQUENCE
-          No watermark, exact native/upscaled 8K clarity, no gate screens.
+          1. INTRO: NATIVE THEATRE CAMERA & CURTAINS SEQUENCE
+          No watermark, no final title card, original sharp colors & dynamic range.
           ======================================================== */}
       {!isIntroDone && (
         <div className={`intro-cinema-layer ${transitioning ? 'transitioning' : ''}`}>
@@ -126,25 +130,33 @@ export default function TheatronPage() {
             className="cinema-projection-video"
             playsInline
             autoPlay
-            muted
             preload="auto"
             onTimeUpdate={handleVideoTimeUpdate}
             onEnded={triggerCurtainTransition}
-            onError={handleVideoFallback}
           >
-            <source src="/assets/intro_4k.mp4" type="video/mp4" />
-            <source src="/assets/intro_8k.mp4" type="video/mp4" />
             <source src="/assets/intro.mp4" type="video/mp4" />
           </video>
+
+          {/* Very subtle cinematic edge vignette (15% opacity), never crushing the auditorium details */}
+          <div className="cinema-subtle-overlay" />
 
           {/* Anamorphic Lens Flare Sweep on Curtains Opening */}
           <div className={`cinema-flash ${flashActive ? 'active' : ''}`} />
 
-          {/* Minimal Cinema HUD */}
+          {/* UI Controls positioned above video */}
           <div className="cinema-hud">
+            {isAudioMuted && (
+              <button className="hud-badge pulse-badge" onClick={toggleAudio}>
+                <Volume2 size={13} />
+                <span>ENABLE MILD SOUND</span>
+              </button>
+            )}
             <button className="hud-btn" onClick={triggerCurtainTransition}>
               <span>SKIP TO STAGE</span>
               <ArrowRight size={13} />
+            </button>
+            <button className="hud-btn icon-only" onClick={toggleAudio} title="Toggle Audio">
+              {isAudioMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
             </button>
           </div>
         </div>
@@ -157,7 +169,7 @@ export default function TheatronPage() {
       <div className={`theatre-scene-container ${isIntroDone ? 'visible' : 'prerender'}`}>
         <div className="theatre-stage-environment">
           <div className="theatre-stage-canvas">
-            {/* The exact 4K pristine main page stage visual */}
+            {/* The exact pristine main page stage visual */}
             <img 
               src="/assets/main_stage_exact_hd.png" 
               alt="Theatron 2026 Theatrical Stage Experience" 

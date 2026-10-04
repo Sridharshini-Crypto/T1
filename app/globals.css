@@ -1,5 +1,5 @@
 /* ========================================================
-   THEATRON 2026 - EXACT THEATRICAL STAGE INTERFACE
+   THEATRON 2026 - PURE CINEMATIC THEATRE STAGE INTERFACE
    ======================================================== */
 
 :root {
@@ -42,7 +42,8 @@ html, body {
 }
 
 /* ========================================================
-   2. INTRO CINEMA LAYER (DIRECT 8K/4K VIDEO)
+   2. INTRO CINEMA LAYER (NATIVE HARDWARE-ACCELERATED VIDEO)
+   Clean, sharp, uncompressed native video playback
    ======================================================== */
 
 .intro-cinema-layer {
@@ -65,11 +66,28 @@ html, body {
   pointer-events: none;
 }
 
+/* Native Video Element: clean, full viewport edge-to-edge, NO blur, NO contrast filters */
 .cinema-projection-video {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
   display: block;
+}
+
+/* Very subtle edge vignette (12-15% perimeter), leaving the central auditorium & seats completely visible */
+.cinema-subtle-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(ellipse at center, transparent 72%, rgba(4, 3, 3, 0.15) 100%);
+  pointer-events: none;
+  z-index: 2;
 }
 
 /* Anamorphic Lens Flare Sweep on Curtains Opening */
@@ -90,7 +108,7 @@ html, body {
   opacity: 1;
 }
 
-/* Cinema HUD during Intro */
+/* UI Controls positioned cleanly above video */
 .cinema-hud {
   position: absolute;
   bottom: 32px;
@@ -123,6 +141,41 @@ html, body {
   border-color: rgba(255, 255, 255, 0.5);
   color: #fff;
   transform: translateY(-1px);
+}
+
+.hud-btn.icon-only {
+  padding: 10px 14px;
+}
+
+.hud-badge {
+  background: rgba(211, 32, 39, 0.85);
+  border: 1px solid rgba(255, 200, 200, 0.4);
+  color: #ffffff;
+  padding: 9px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  border-radius: 2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 20px rgba(211, 32, 39, 0.5);
+}
+
+.pulse-badge {
+  animation: theatrePulse 2s infinite ease-in-out;
+}
+
+@keyframes theatrePulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 15px rgba(211, 32, 39, 0.4);
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 0 25px rgba(211, 32, 39, 0.8);
+  }
 }
 
 /* ========================================================
