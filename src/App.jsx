@@ -15,46 +15,44 @@ export default function TheatronPage() {
   const [transitioning, setTransitioning] = useState(false);
   const [isIntroDone, setIsIntroDone] = useState(false);
   const [flashActive, setFlashActive] = useState(false);
-  const [isAudioMuted, setIsAudioMuted] = useState(false);
+  const [isAudioMuted, setIsAudioMuted] = useState(true);
   const [activeView, setActiveView] = useState('hero'); // 'hero' | 'events' | 'trailer'
 
   const introVideoRef = useRef(null);
   const bgAudioRef = useRef(null);
   const trailerVideoRef = useRef(null);
 
-  // 1. Direct Start: Native video autoplays immediately edge-to-edge with mild atmospheric sound
+  // 1. Direct Start: Guaranteed native video autoplay edge-to-edge
   useEffect(() => {
     const video = introVideoRef.current;
     if (video) {
+      video.defaultMuted = true;
+      video.muted = true;
       video.volume = 0.28;
+      video.play().catch(() => {});
 
-      const playPromise = video.play();
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            setIsAudioMuted(false);
-          })
-          .catch(() => {
-            // If browser blocks unmuted audio on load, start muted immediately so video glides without delay
-            video.muted = true;
-            setIsAudioMuted(true);
-            video.play().catch(() => {});
+      // Smoothly activate mild atmospheric sound (0.28) on first user interaction anywhere
+      const unlockAudio = () => {
+        if (video) {
+          if (video.paused) video.play().catch(() => {});
+          video.muted = false;
+          video.volume = 0.28;
+          setIsAudioMuted(false);
+        }
+        window.removeEventListener('click', unlockAudio);
+        window.removeEventListener('keydown', unlockAudio);
+        window.removeEventListener('touchstart', unlockAudio);
+      };
 
-            // Smoothly activate mild atmospheric sound (0.28) on first user interaction anywhere
-            const unlockAudio = () => {
-              video.muted = false;
-              video.volume = 0.28;
-              setIsAudioMuted(false);
-              window.removeEventListener('click', unlockAudio);
-              window.removeEventListener('keydown', unlockAudio);
-              window.removeEventListener('touchstart', unlockAudio);
-            };
+      window.addEventListener('click', unlockAudio, { once: true });
+      window.addEventListener('keydown', unlockAudio, { once: true });
+      window.addEventListener('touchstart', unlockAudio, { once: true });
 
-            window.addEventListener('click', unlockAudio, { once: true });
-            window.addEventListener('keydown', unlockAudio, { once: true });
-            window.addEventListener('touchstart', unlockAudio, { once: true });
-          });
-      }
+      return () => {
+        window.removeEventListener('click', unlockAudio);
+        window.removeEventListener('keydown', unlockAudio);
+        window.removeEventListener('touchstart', unlockAudio);
+      };
     }
   }, []);
 
@@ -130,6 +128,7 @@ export default function TheatronPage() {
             className="cinema-projection-video"
             playsInline
             autoPlay
+            muted
             preload="auto"
             onTimeUpdate={handleVideoTimeUpdate}
             onEnded={triggerCurtainTransition}
