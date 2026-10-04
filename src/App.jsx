@@ -122,10 +122,32 @@ export default function TheatronPage() {
           No watermark, no final title card, original sharp colors & dynamic range.
           ======================================================== */}
       {!isIntroDone && (
-        <div className={`intro-cinema-layer ${transitioning ? 'transitioning' : ''}`}>
+        <div 
+          className={`intro-cinema-layer ${transitioning ? 'transitioning' : ''}`}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            zIndex: 9999,
+            backgroundColor: '#040303',
+            overflow: 'hidden'
+          }}
+        >
           <video
             ref={introVideoRef}
             className="cinema-projection-video"
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100vw',
+              height: '100vh',
+              objectFit: 'cover',
+              objectPosition: 'center',
+              backgroundColor: '#040303'
+            }}
             playsInline
             autoPlay
             muted
@@ -165,7 +187,10 @@ export default function TheatronPage() {
           2. MAIN THEATRICAL STAGE EXPERIENCE
           Exact 100% faithful replica of the source of truth image
           ======================================================== */}
-      <div className={`theatre-scene-container ${isIntroDone ? 'visible' : 'prerender'}`}>
+      <div 
+        className={`theatre-scene-container ${isIntroDone ? 'visible' : (transitioning ? 'visible prerender-fade' : 'prerender')}`}
+        style={{ display: isIntroDone || transitioning ? 'block' : 'none' }}
+      >
         <div className="theatre-stage-environment">
           <div className="theatre-stage-canvas">
             {/* The exact pristine main page stage visual */}
